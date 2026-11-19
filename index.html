@@ -107,6 +107,8 @@
 
     th, td { padding: 0.9rem 1.5rem; }
 
+    th:first-child, td:first-child { width: 4.5rem; text-align: center; }
+
     th {
       background: #f8fafc;
       color: var(--muted);
@@ -226,14 +228,15 @@
       const byCity = new Map();
 
       included.forEach((row) => {
-        const prices = byCity.get(row.city) || [];
+        const key = `${row.city}, ${row.state}`;
+        const prices = byCity.get(key) || [];
         prices.push(Number(row.sale_price));
-        byCity.set(row.city, prices);
+        byCity.set(key, prices);
       });
 
       const results = [...byCity.entries()]
         .map(([city, prices]) => ({ city, sales: prices.length, median: median(prices) }))
-        .sort((a, b) => a.city.localeCompare(b.city));
+        .sort((a, b) => b.median - a.median || a.city.localeCompare(b.city));
 
       document.querySelector("#summary").textContent =
         `${included.length.toLocaleString()} sales included across ${results.length} cities`;
@@ -241,11 +244,12 @@
       const table = document.createElement("table");
       table.innerHTML = `
         <thead>
-          <tr><th scope="col">City</th><th scope="col">Sales included</th><th scope="col">Median sale price</th></tr>
+          <tr><th scope="col">Rank</th><th scope="col">City, state</th><th scope="col">Sales included</th><th scope="col">Median sale price</th></tr>
         </thead>
         <tbody>
-          ${results.map((result) => `
+          ${results.map((result, index) => `
             <tr>
+              <td>${index + 1}</td>
               <td>${result.city}</td>
               <td>${result.sales.toLocaleString()}</td>
               <td class="price">${formatPrice(result.median)}</td>
